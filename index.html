@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kommentar Generator</title>
+<style>
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+line-height: 1.6;
+color: #333;
+max-width: 800px;
+margin: 0 auto;
+padding: 20px;
+background-color: #fafafa;
+}
+
+h1 {
+color: #E1306C;
+text-align: center;
+margin-bottom: 30px;
+background: linear-gradient(45deg, #833AB4, #E1306C, #FCAF45);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+}
+
+.container {
+background-color: white;
+border-radius: 10px;
+padding: 25px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+margin-bottom: 20px;
+}
+
+label {
+display: block;
+margin-bottom: 8px;
+font-weight: 600;
+}
+
+input[type="text"],
+input[type="url"],
+textarea,
+select {
+width: 100%;
+padding: 10px;
+border: 1px solid #ddd;
+border-radius: 4px;
+font-size: 16px;
+}
+
+textarea {
+min-height: 100px;
+resize: vertical;
+}
+
+button {
+background: linear-gradient(45deg, #833AB4, #E1306C);
+color: white;
+border: none;
+padding: 12px 20px;
+border-radius: 25px;
+cursor: pointer;
+font-size: 16px;
+font-weight: 600;
+width: 100%;
+transition: transform 0.3s, box-shadow 0.3s;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.result {
+margin-top: 30px;
+display: none;
+}
+
+.comment {
+background-color: #f8f8f8;
+border-left: 4px solid #E1306C;
+padding: 15px;
+margin-bottom: 15px;
+border-radius: 0 4px 4px 0;
+position: relative;
+}
+
+.comment-author {
+color: #E1306C;
+font-weight: bold;
+margin-bottom: 5px;
+}
+
+.copy-btn {
+background-color: #405DE6;
+padding: 5px 10px;
+font-size: 14px;
+width: auto;
+margin-top: 10px;
+border-radius: 15px;
+}
+
+.copy-btn:hover {
+background-color: #3a4bc1;
+}
+
+.loading {
+text-align: center;
+display: none;
+}
+
+.spinner {
+border: 4px solid rgba(0, 0, 0, 0.1);
+border-radius: 50%;
+border-top: 4px solid #E1306C;
+width: 30px;
+height: 30px;
+animation: spin 1s linear infinite;
+margin: 20px auto;
+}
+
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+
+.settings {
+margin-top: 30px;
+padding-top: 20px;
+border-top: 1px solid #eee;
+}
+
+.language-tag {
+position: absolute;
+top: 10px;
+right: 10px;
+background-color: #405DE6;
+color: white;
+padding: 2px 6px;
+border-radius: 3px;
+font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Ipek Fan Kommentar Generator</h1>
+
+<div class="form-group">
+<label for="post-url">Instagram Post URL (optional)</label>
+<input type="url" id="post-url" placeholder="https://www.instagram.com/p/...">
+</div>
+
+<div class="form-group">
+<label for="image-description">Was siehst du auf dem Bild? (Beschreibe Outfit, Pose, Hintergrund etc.)</label>
+<textarea id="image-description" placeholder="Z.B.: 'Ipek trägt ein schwarzes Lederoutfit mit silbernen Accessoires, steht vor einer urbanen Graffiti-Wand in einer kraftvollen Pose...'"></textarea>
+</div>
+
+<div class="settings">
+<div class="form-group">
+<label for="comment-count">Anzahl der Kommentare</label>
+<select id="comment-count">
+<option value="5">5</option>
+<option value="10" selected>10</option>
+<option value="15">15</option>
+<option value="20">20</option>
+</select>
+</div>
+
+<div class="form-group">
+<label for="language">Hauptsprache</label>
+<select id="language">
+<option value="deutsch">Deutsch</option>
+<option value="englisch">Englisch</option>
+<option value="türkisch">Türkisch</option>
+<option value="spanisch">Spanisch</option>
+<option value="französisch">Französisch</option>
+<option value="gemischt">Gemischt (wie echte Fans)</option>
+</select>
+</div>
+
+<div class="form-group">
+<label for="tone">Fan-Typ</label>
+<select id="tone">
+<option value="euphorisch">Euphorische Fans (❤️🔥)</option>
+<option value="bewundernd">Bewundernde Fans (👑✨)</option>
+<option value="humorvoll">Humorvolle Fans (😂🤪)</option>
+<option value="simp">Simps (😍💍)</option>
+<option value="real">Echte Vibes (wie bei Celebrities)</option>
+</select>
+</div>
+</div>
+
+<button id="generate-btn">Fan-Kommentare generieren</button>
+
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<p>Generiere authentische Fan-Kommentare für Ipek...</p>
+</div>
+
+<div class="result" id="result">
+<h2>Generierte Fan-Kommentare</h2>
+<div id="comments-container"></div>
+<button class="copy-btn" id="copy-all-btn">Alle Kommentare kopieren</button>
+</div>
+</div>
+
+<script>
+document.getElementById('generate-btn').addEventListener('click', generateComments);
+document.getElementById('copy-all-btn').addEventListener('click', copyAllComments);
+
+// Authentische Fan-Namen (international gemischt)
+const fanNames = [
+// Deutsche Fans
+"lena_fanpage", "ipek.liebe", "official_fanclub", "max.mustermann", "sarah.koeln",
+"fan_forever23", "ipeks_world", "berlin_stan", "luca_fanboy", "mia.kgl",
+
+// Türkische Fans
+"ipekcanavari", "turkiye_fan", "istanbul_stan", "bizimipek", "askimipek",
+"fanatik_turk", "ipek_sevdalisi", "ankara_fan", "ipekcix", "turkish_stan",
+
+// Internationale Fans
+"ipek.world", "stan_account", "queen.ipek", "ipek.daily", "global_fanpage",
+"ipek_latinas", "france.ipek", "usa_fan123", "ipek_brasil", "japan_fan"
+];
+
+// Emoji-Kombinationen für verschiedene Stimmungen
+const emojiSets = {
+euphorisch: ["❤️", "🔥", "😍", "👑", "✨", "🌟", "💫", "💖", "💯", "🥵"],
+bewundernd: ["👑", "✨", "🌟", "💎", "🥇", "🏆", "🙌", "🤩", "💕", "💝"],
+humorvoll: ["😂", "🤣", "😆", "🤪", "👀", "💀", "🍿", "🙈", "😭", "🥴"],
+simp: ["😍", "💍", "👰", "🤰", "💑", "💘", "😘", "🥰", "😳", "💞"],
+real: ["❤️‍🔥", "💯", "🔥", "⚡", "🙏", "🤍", "🖤", "💋", "✌️", "🌹"]
+};
+
+async function generateComments() {
+const postUrl = document.getElementById('post-url').value;
+const imageDescription = document.getElementById('image-description').value;
+const commentCount = document.getElementById('comment-count').value;
+const language = document.getElementById('language').value;
+const tone = document.getElementById('tone').value;
+
+if (!imageDescription) {
+alert('Bitte beschreibe das Bild, damit die Kommentare passend generiert werden können.');
+return;
+}
+
+// Show loading
+document.getElementById('loading').style.display = 'block';
+document.getElementById('result').style.display = 'none';
+
+try {
+// Simulierte Antwort mit Fan-Kommentaren im Stil von echten Celeb-Fans
+const comments = await simulateFanComments({
+imageDescription,
+commentCount,
+language,
+tone
+});
+
+displayComments(comments);
+} catch (error) {
+console.error('Fehler:', error);
+alert('Es gab einen Fehler beim Generieren der Kommentare. Bitte versuche es erneut.');
+} finally {
+document.getElementById('loading').style.display = 'none';
+}
+}
+
+function simulateFanComments(params) {
+return new Promise((resolve) => {
+setTimeout(() => {
+const comments = generateAuthenticFanComments(params);
+resolve(comments);
+}, 1000);
+});
+}
+
+function generateAuthenticFanComments({ imageDescription, commentCount, language, tone }) {
+const count = parseInt(commentCount);
+const comments = [];
+const emojis = emojiSets[tone] || emojiSets.real;
+
+// Basierend auf echten Fan-Kommentaren von Celeb-Accounts
+const commentTemplates = {
+deutsch: [
+"Ipek du siehst einfach unglaublich aus! 😍",
+"Wie kann ein Mensch so perfekt sein? 😳",
+"Ich sterbe gleich 😭❤️ du bist perfekt!",
+"BITTE heirate michmommy 😍💍",
+"Du bist die Definition von Perfektion 👑",
+"Dieses Outfit 😱🔥 einfach wow!",
+"Ich kann nicht mehr, das ist zu viel Schönheit 😫",
+"Mama ich hab mich verliebt 🥺💘",
+"Warum bist du so perfekt? 😭",
+"Ich würde alles für dich tun 😩❤️
+"my shayla"
+],
+englisch: [
+"Ipek you're literally perfect 😍",
+"How are you real??? 😳",
+"I'm deceased 😵❤️ you're everything!",
+"MARRY ME PLEASE 😍💍",
+"mommy i need you in my life 👑",
+"This outfit 😱🔥 slaying as always!",
+"I can't handle this much beauty 😫",
+"step on me forreal",
+"Mom I'm in love 🥺💘",
+"Why are you like this?? 😭",
+"I'd do anything for you 😩❤️"
+],
+türkisch: [
+"Ipek sen mükemmelsin! 😍",
+"Bu nasıl bir güzellik böyle? 😳",
+"Öldüm öldüm dirildim 😭❤️",
+"Lütfen benimle evlen 💍",
+"Sen mükemmelliğin tanımısın 👑",
+"Bu kıyafet 😱🔥 bayıldım!",
+"Bu kadar güzellik fazla 😫",
+"Anne aşık oldum 🥺💘",
+"Neden böyle mükemmelsin? 😭",
+"Senin için her şeyi yaparım 😩❤️"
+],
+spanisch: [
+"Ipek eres literalmente perfecta 😍",
+"¿Cómo es posible tanta belleza? 😳",
+"Me muero 😵❤️ eres todo!",
+"CÁSATE CONMIGO POR FAVOR 😍💍",
+"Eres la definición de perfección 👑",
+"Este outfit 😱🔥 increíble como siempre!",
+"No soporto tanta belleza 😫",
+"Mamá me enamoré 🥺💘",
+"¿Por qué eres así?? 😭",
+"Haría cualquier cosa por ti 😩❤️"
+],
+französisch: [
+"Ipek tu es parfaite 😍",
+"Comment peux-tu être aussi belle ? 😳",
+"Je suis morte 😵❤️ tu es tout!",
+"ÉPOUSE-MOI STP 😍💍",
+"Tu es la définition de la perfection 👑",
+"Cette tenue 😱🔥 incroyable!",
+"Trop de beauté je supporte pas 😫",
+"Maman je suis amoureuse 🥺💘",
+"Pourquoi tu es comme ça?? 😭",
+"Je ferais n'importe quoi pour toi 😩❤️"
+]
+};
+
+// Für den "realen" Stil - wie bei echten Celeb-Posts
+const realComments = [
+"😍😍😍😍😍",
+"STUNNING. ABSOLUTELY STUNNING.",
+"You always deliver the best styles 🔥",
+"How does it feel to be God's favorite?",
+"I've watched this 87 times already help",
+"THE HAIR THE FACE THE OUTFIT THE EVERYTHING",
+"Not you being perfect again 😩",
+"I would simply pass away if you looked at me",
+"This is ART. You're ART.",
+"The way I gasped when I saw this 😱",
+"Nah because why are you THIS pretty?",
+"I'm in love with everything about this",
+"You're so beautiful it hurts",
+"This is illegal levels of beauty",
+"The world doesn't deserve you",
+"Ipek supremacy periodt",
+"THE SERVE. THE POWER. THE ELEGANCE.MOMMY",
+"Mother is mothering as usual 💅",
+"You're literally glowing wtf",
+"This cured my depression"
+];
+
+for (let i = 0; i < count; i++) {
+let commentText;
+let commentLanguage = language;
+
+// Wenn "gemischt" ausgewählt ist, zufällige Sprache wählen (wie bei echten Intl-Fans)
+if (language === "gemischt") {
+const languages = ["deutsch", "englisch", "türkisch", "spanisch", "französisch"];
+const weights = [0.2, 0.5, 0.15, 0.1, 0.05]; // Englisch häufiger
+commentLanguage = weightedRandom(languages, weights);
+}
+
+// Für "realen" Stil - mehr Caps, Emoji-Ketten, Internet-Slang
+if (tone === "real") {
+commentText = realComments[Math.floor(Math.random() * realComments.length)];
+
+// Zufällig Caps lock machen
+if (Math.random() > 0.7) {
+commentText = commentText.toUpperCase();
+}
+
+// Emoji-Ketten hinzufügen
+if (Math.random() > 0.5) {
+const emojiChain = Array(Math.floor(Math.random() * 5) + 3).fill(0)
+.map(() => emojis[Math.floor(Math.random() * emojis.length)])
+.join('');
+commentText += ' ' + emojiChain;
+}
+} else {
+// Standard-Kommentare basierend auf Sprache
+const templates = commentTemplates[commentLanguage] || commentTemplates.englisch;
+commentText = templates[Math.floor(Math.random() * templates.length)];
+
+// Emojis hinzufügen
+if (Math.random() > 0.3) {
+const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+commentText += ' ' + randomEmoji;
+}
+}
+
+// Zufälligen Fan-Namen auswählen
+const randomName = fanNames[Math.floor(Math.random() * fanNames.length)];
+
+// Manchmal den Kommentar verlängern (wie bei echten Fans)
+if (Math.random() > 0.7) {
+const additions = [
+" Ich liebe dich so sehr!",
+" Bitte mehr davon!",
+" Du machst mich glücklich!",
+" Ich kann nicht aufhören zu starren!",
+" Bitte bemerke mich!",
+" Du bist mein Idol!",
+" Ich schwöre du bist die Beste!",
+" Bitte lass das kein Filter sein!",
+" Ich bin dein größter Fan!",
+" Du verdienst die Welt!"
+];
+commentText += additions[Math.floor(Math.random() * additions.length)];
+}
+
+// Manchmal Reply-Stil (wie bei echten Threads)
+if (Math.random() > 0.8) {
+commentText = "@" + randomName + " " + commentText;
+}
+
+comments.push({
+text: commentText,
+author: randomName,
+language: commentLanguage
+});
+}
+
+return comments;
+}
+
+// Hilfsfunktion für gewichtete Zufallsauswahl
+function weightedRandom(items, weights) {
+let i;
+for (i = 1; i < weights.length; i++) {
+weights[i] += weights[i - 1];
+}
+
+const random = Math.random() * weights[weights.length - 1];
+
+for (i = 0; i < weights.length; i++) {
+if (weights[i] > random) {
+break;
+}
+}
+
+return items[i];
+}
+
+function displayComments(comments) {
+const container = document.getElementById('comments-container');
+container.innerHTML = '';
+
+comments.forEach(comment => {
+const commentDiv = document.createElement('div');
+commentDiv.className = 'comment';
+
+const languageNames = {
+deutsch: "DE",
+englisch: "EN",
+türkisch: "TR",
+spanisch: "ES",
+französisch: "FR"
+};
+
+commentDiv.innerHTML = `
+<div class="comment-author">@${comment.author}</div>
+<div class="language-tag">${languageNames[comment.language] || comment.language}</div>
+<p>${comment.text}</p>
+<button class="copy-btn" data-comment="${comment.text.replace(/"/g, '&quot;')}">Kopieren</button>
+`;
+container.appendChild(commentDiv);
+});
+
+// Kopier-Buttons für einzelne Kommentare hinzufügen
+document.querySelectorAll('[data-comment]').forEach(btn => {
+btn.addEventListener('click', function() {
+const commentText = this.getAttribute('data-comment');
+navigator.clipboard.writeText(commentText)
+.then(() => {
+this.textContent = 'Kopiert!';
+setTimeout(() => {
+this.textContent = 'Kopieren';
+}, 2000);
+});
+});
+});
+
+document.getElementById('result').style.display = 'block';
+}
+
+function copyAllComments() {
+const comments = [];
+document.querySelectorAll('[data-comment]').forEach(btn => {
+comments.push(btn.getAttribute('data-comment'));
+});
+
+navigator.clipboard.writeText(comments.join('\n\n'))
+.then(() => {
+const btn = document.getElementById('copy-all-btn');
+btn.textContent = 'Alle kopiert!';
+setTimeout(() => {
+btn.textContent = 'Alle Kommentare kopieren';
+}, 2000);
+});
+}
+</script>
+</body>
+</html>
